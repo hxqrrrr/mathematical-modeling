@@ -3,6 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+from scipy import stats
+import seaborn as sns
+
+
+
 # 获取当前脚本所在目录的绝对路径
 current_path = os.path.dirname(__file__)
 
@@ -78,9 +83,114 @@ plt.show()
 
 
 
+#########################################  单品销售额分布 ############
+# 按销售量降序排序
+df_result1_sorted = df_result1.sort_values('销量(千克)', ascending=False)
 
-# 计算帕累托原则（80/20法则）
-pareto_threshold = df_result2_sorted[df_result2_sorted['累计销售量占比'] <= 0.8].shape[0]
-print(f"\n占总销售量80%的品类数量：{pareto_threshold}")
-print(f"占总品类数量的比例：{pareto_threshold/len(df_result2_sorted)*100:.2f}%")
+# 计算累计销售量占比
+df_result1_sorted['累计销售量占比'] = df_result1_sorted['销量(千克)'].cumsum() / df_result1_sorted['销量(千克)'].sum()
+
+# 绘制单品销售量分布图（所有252个）
+fig, ax1 = plt.subplots(figsize=(30, 12))  # 增加图表宽度
+
+# 创建均匀间隔的 x 轴
+x = np.arange(246)
+
+# 绘制柱状图
+bars = ax1.bar(x, df_result1_sorted['销量(千克)'], color='skyblue', width=0.8)
+
+# 添加标题和轴标签
+ax1.set_title('蔬菜单品销售量分布及累计占比（全部252个）', fontsize=24)
+ax1.set_xlabel('单品编码', fontsize=16)
+ax1.set_ylabel('销售量(千克)', fontsize=16, color='skyblue')
+
+# 设置 x 轴刻度和标签
+ax1.set_xticks(x[::5])  # 每5个显示一个标签
+ax1.set_xticklabels(df_result1_sorted['单品编码'][::5], rotation=90, ha='center', fontsize=8)
+
+# 格式化 y 轴，添加千位分隔符
+ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
+
+# 添加数据标签（只为前20个添加标签以避免过于拥挤）
+for bar in bars[:20]:
+    height = bar.get_height()
+    ax1.text(bar.get_x() + bar.get_width()/2., height,
+             f'{int(height):,}',
+             ha='center', va='bottom', fontsize=8, rotation=90)
+
+# 添加网格线
+ax1.grid(axis='y', linestyle='--', alpha=0.7)
+
+# 添加累计销售量占比的折线图
+ax2 = ax1.twinx()
+ax2.plot(x, df_result1_sorted['累计销售量占比'], color='red', marker='', linestyle='-', linewidth=2)
+ax2.set_ylabel('累计销售量占比', color='red', fontsize=16)
+ax2.tick_params(axis='y', labelcolor='red')
+ax2.set_ylim(0, 1)
+ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
+
+# 添加图例
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1 + lines2, ['销售量', '累计占比'], loc='upper right', fontsize=14)
+
+# 调整布局
+plt.tight_layout()
+
+# 显示图表
+plt.show()
+
+# 打印前10个销量最大的单品
+print("销量最大的前10个单品：")
+print(df_result1_sorted[['单品编码', '销量(千克)', '累计销售量占比']].head(10).to_string(index=False))
+
+# 打印长尾效应
+print("\n长尾效应分析：")
+print(f"前20%的单品（{len(df_result1_sorted)//5}个）占总销量的 {df_result1_sorted['累计销售量占比'].iloc[len(df_result1_sorted)//5-1]:.2%}")
+print(f"前50%的单品（{len(df_result1_sorted)//2}个）占总销量的 {df_result1_sorted['累计销售量占比'].iloc[len(df_result1_sorted)//2-1]:.2%}")
+
+
+# #####################################################合并单品和品类数据#########################
+# 计算相关系数
+correlation = stats.pearsonr(df_category_analysis['单品数量'], df_category_analysis['销量(千克)'])
+print(f"单品数量和销售量的相关系数: {correlation[0]:.2f}, p-value: {correlation[1]:.4f}")
+
+# 改进的散点图
+plt.figure(figsize=(14, 8))
+sns.scatterplot(data=df_category_analysis, x='单品数量', y='销量(千克)', 
+                size='平均单品销售量', sizes=(20, 500), alpha=0.6)
+plt.title('品类销售量 vs 单品数量 (气泡大小表示平均单品销售量)')
+plt.xlabel('单品数量')
+plt.ylabel('销量(千克)')
+
+# 添加趋势线
+sns.regplot(data=df_category_analysis, x='单品数量', y='销量(千克)', 
+            scatter=False, color='red')
+
+# 为top 5的品类添加标签
+for i in range(5):
+    row = df_category_analysis_sorted.iloc[i]
+    plt.annotate(row['分类编码'], (row['单品数量'], row['销量(千克)']),
+                 xytext=(5, 5), textcoords='offset points')
+
+plt.tight_layout()
+plt.show()
+
+# 条形图：top 10品类的平均单品销售量
+plt.figure(figsize=(14, 8))
+sns.barplot(data=df_category_analysis_sorted.head(10), x='分类编码', y='平均单品销售量')
+plt.title('Top 10 品类的平均单品销售量')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# 饼图：销售量占比
+plt.figure(figsize=(12, 12))
+plt.pie(df_category_analysis['销量(千克)'], labels=df_category_analysis['分类编码'], autopct='%1.1f%%')
+plt.title('各品类销售量占比')
+plt.axis('equal')
+plt.tight_layout()
+plt.show()
+
+
 

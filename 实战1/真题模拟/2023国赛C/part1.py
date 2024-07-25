@@ -29,12 +29,12 @@ print(df2.head())
 
 df_merge = pd.merge(df1,df2,on='单品编码',how='inner')
 df_merge['总销售额']=df_merge['销量(千克)']*df_merge['销售单价(元/千克)']
-
 df_result1 = df_merge.groupby('单品编码').agg({'销量(千克)':'sum','总销售额':'sum'}).reset_index()
 df_result2 = df_merge.groupby('分类编码').agg({'销量(千克)':'sum','总销售额':'sum'}).reset_index()
+df_result2_add = df1.groupby('分类编码').agg({'单品编码':'count'}).reset_index()
 
-print(df_result1.to_string())
-print(df_result2.to_string())
+df_result2["单品数量"] = df_result2_add['单品编码']
+df_result2["平均单品销售量"] = df_result2['总销售额'] / df_result2['单品数量']
 
 
 #########################################  品类销售量分布 ##################################################
@@ -152,45 +152,48 @@ print(f"前50%的单品（{len(df_result1_sorted)//2}个）占总销量的 {df_r
 
 # #####################################################合并单品和品类数据#########################
 # 计算相关系数
-correlation = stats.pearsonr(df_category_analysis['单品数量'], df_category_analysis['销量(千克)'])
+from scipy import stats
+
+df_result2['单品数量'] = df_result2['单品数量'].astype(int)
+df_result2['销量(千克)'] = df_result2['销量(千克)'].astype(int)
+df_result2['平均单品销售量'] = (df_result2['销量(千克)'] / df_result2['单品数量']).round().astype(int)
+
+correlation = stats.pearsonr(df_result2['单品数量'], df_result2['销量(千克)'])
 print(f"单品数量和销售量的相关系数: {correlation[0]:.2f}, p-value: {correlation[1]:.4f}")
 
 # 改进的散点图
 plt.figure(figsize=(14, 8))
-sns.scatterplot(data=df_category_analysis, x='单品数量', y='销量(千克)', 
+sns.scatterplot(data=df_result2, x='单品数量', y='销量(千克)', 
                 size='平均单品销售量', sizes=(20, 500), alpha=0.6)
-plt.title('品类销售量 vs 单品数量 (气泡大小表示平均单品销售量)')
+plt.title('品类 销售量 vs 单品数量 (气泡大小表示平均单品销售量)')
 plt.xlabel('单品数量')
 plt.ylabel('销量(千克)')
 
 # 添加趋势线
-sns.regplot(data=df_category_analysis, x='单品数量', y='销量(千克)', 
+sns.regplot(data=df_result2, x='单品数量', y='销量(千克)', 
             scatter=False, color='red')
 
 # 为top 5的品类添加标签
 for i in range(5):
-    row = df_category_analysis_sorted.iloc[i]
-    plt.annotate(row['分类编码'], (row['单品数量'], row['销量(千克)']),
+    row = df_result2.iloc[i]
+    # 将分类编码四舍五入为整数
+    integer_code = int(round(row['分类编码']))
+    plt.annotate(str(integer_code), (row['单品数量'], row['销量(千克)']),
                  xytext=(5, 5), textcoords='offset points')
 
 plt.tight_layout()
 plt.show()
 
-# 条形图：top 10品类的平均单品销售量
-plt.figure(figsize=(14, 8))
-sns.barplot(data=df_category_analysis_sorted.head(10), x='分类编码', y='平均单品销售量')
-plt.title('Top 10 品类的平均单品销售量')
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
+
 
 # 饼图：销售量占比
 plt.figure(figsize=(12, 12))
-plt.pie(df_category_analysis['销量(千克)'], labels=df_category_analysis['分类编码'], autopct='%1.1f%%')
+plt.pie(df_result2['销量(千克)'], labels=df_result2['分类编码'], autopct='%1.1f%%')
 plt.title('各品类销售量占比')
 plt.axis('equal')
 plt.tight_layout()
 plt.show()
+
 
 
 

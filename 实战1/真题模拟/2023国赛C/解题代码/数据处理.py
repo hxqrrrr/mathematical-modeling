@@ -68,3 +68,14 @@ daily_sales_2_3.to_excel("分类销量按日_食用菌.xlsx", index=False)
 daily_sales_2_4.to_excel("分类销量按日_辣椒类.xlsx", index=False)
 daily_sales_2_5.to_excel("分类销量按日_花菜类.xlsx", index=False)
 daily_sales_2_6.to_excel("分类销量按日_茄类.xlsx", index=False)
+
+daily_sales_all = daily_sales_2_1.drop(columns = ["分类名称"])
+daily_sales_all = daily_sales_2_1.drop(columns = ["总销量(千克)"])
+
+daily_sales_all["水生根茎类"] = daily_sales_2_2["总销量(千克)"]
+daily_sales_all["花叶类"] = daily_sales_2_2["总销量(千克)"]
+daily_sales_all["食用菌"] = daily_sales_2_3["总销量(千克)"]
+daily_sales_all["辣椒类"] = daily_sales_2_4["总销量(千克)"]
+daily_sales_all["花菜类"] = daily_sales_2_5["总销量(千克)"]
+daily_sales_all["茄类"] = daily_sales_2_6["总销量(千克)"]
+daily_sales_all.to_excel("分类全销量按日.xlsx", index=False)

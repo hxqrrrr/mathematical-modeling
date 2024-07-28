@@ -5,7 +5,10 @@ import matplotlib.ticker as ticker
 import numpy as np
 from scipy import stats
 import seaborn as sns
-
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 
 # 获取当前脚本所在目录的绝对路径
@@ -72,10 +75,64 @@ daily_sales_2_6.to_excel("分类销量按日_茄类.xlsx", index=False)
 daily_sales_all = daily_sales_2_1.drop(columns = ["分类名称"])
 daily_sales_all = daily_sales_2_1.drop(columns = ["总销量(千克)"])
 
-daily_sales_all["水生根茎类"] = daily_sales_2_2["总销量(千克)"]
-daily_sales_all["花叶类"] = daily_sales_2_2["总销量(千克)"]
-daily_sales_all["食用菌"] = daily_sales_2_3["总销量(千克)"]
-daily_sales_all["辣椒类"] = daily_sales_2_4["总销量(千克)"]
-daily_sales_all["花菜类"] = daily_sales_2_5["总销量(千克)"]
-daily_sales_all["茄类"] = daily_sales_2_6["总销量(千克)"]
+daily_sales_all["水生根茎类"] = daily_sales_2_2["总销量(千克)"].reset_index(drop=True)
+daily_sales_all["花叶类"] = daily_sales_2_2["总销量(千克)"].reset_index(drop=True)
+daily_sales_all["食用菌"] = daily_sales_2_3["总销量(千克)"].reset_index(drop=True)
+daily_sales_all["辣椒类"] = daily_sales_2_4["总销量(千克)"].reset_index(drop=True)
+daily_sales_all["花菜类"] = daily_sales_2_5["总销量(千克)"].reset_index(drop=True)
+daily_sales_all["茄类"] = daily_sales_2_6["总销量(千克)"].reset_index(drop=True)
 daily_sales_all.to_excel("分类全销量按日.xlsx", index=False)
+
+#单品总销量，日销量，最大值统计
+daily_sales_item = daily_sales_1.groupby(['单品名称'])['总销量(千克)'].sum().reset_index()
+daily_sales_item = pd.merge(daily_sales_item, daily_sales_1.groupby(['单品名称'])['总销量(千克)'].mean().reset_index(), on='单品名称', how='inner')
+daily_sales_item = pd.merge(daily_sales_item, daily_sales_1.groupby(['单品名称'])['总销量(千克)'].max().reset_index(), on='单品名称', how='inner')
+daily_sales_item.columns = ["单品名称","单品总销量","单品日均销量","单品日最大销量"]
+daily_sales_item['单品总销量'] = daily_sales_item['单品总销量'].round(1)
+daily_sales_item['单品日均销量'] = daily_sales_item['单品日均销量'].round(1)
+daily_sales_item['单品日最大销量'] = daily_sales_item['单品日最大销量'].round(1)
+
+daily_sales_item.to_excel("单品销量统计.xlsx", index=False)
+
+# k-means聚类分析
+
+features = ['单品总销量', '单品日均销量', '单品日最大销量']
+X = daily_sales_item[features]
+
+# 标准化处理
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 设置K值
+K = 3
+
+# 创建KMeans模型
+kmeans = KMeans(n_clusters=K, random_state=42)
+
+# 拟合数据并预测簇标签
+daily_sales_item['Cluster'] = kmeans.fit_predict(X_scaled)
+
+# 获取簇中心
+centers = kmeans.cluster_centers_
+
+# 将簇中心反标准化
+centers = scaler.inverse_transform(centers)
+
+# 可视化聚类结果
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='单品总销量', y='单品日均销量', hue='Cluster', data=daily_sales_item, palette='viridis', s=100)
+plt.scatter(centers[:, 0], centers[:, 1], c='red', s=200, alpha=0.75, marker='X')
+plt.title('K-means 聚类算法结果')
+plt.xlabel('单品总销量')
+plt.ylabel('单品日均销量')
+plt.legend(title='Cluster')
+plt.show()
+
+
+daily_sales_item.to_excel("单品销量统计.xlsx", index=False)
+daily_sales_item_30 = daily_sales_item.drop(daily_sales_item[(daily_sales_item["Cluster"] == 0) & (daily_sales_item["单品日均销量"] < 8.8)].index)
+daily_sales_item_30 = daily_sales_item_30.drop(daily_sales_item[(daily_sales_item["Cluster"] == 1) & (daily_sales_item["单品日均销量"] < 17.3)].index)
+daily_sales_item_30 = daily_sales_item_30.reset_index(drop=True)
+daily_sales_item_30 = daily_sales_item_30.sort_values(['Cluster', '单品日均销量'],ascending=True)
+daily_sales_item_30.to_excel("单品销量统计_30.xlsx", index=False,)
+

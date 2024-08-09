@@ -19,24 +19,29 @@ path_file1 = os.path.join(current_path, '附件1.xlsx')
 path_file2 = os.path.join(current_path,'附件2.xlsx')
 path_file3 = os.path.join(current_path, '附件3.xlsx')
 path_file4 = os.path.join(current_path,'附件4.xlsx')
+path_file5 = os.path.join(current_path,'附件5.xlsx')
 
 # 打印路径以进行调试
 print(path_file1)
 print(path_file2)
 print(path_file3)
 print(path_file4)
+print(path_file5)
 
 # 读取附件
 df1 = pd.read_excel(path_file1)
 df2 = pd.read_excel(path_file2)
 df3 = pd.read_excel(path_file3)
 df4 = pd.read_excel(path_file4)
+df5 = pd.read_excel(path_file5)
+df5
 
 # 打印数据框的前几行，查看数据
 print(df1.head())
 print(df2.head())
 print(df3.head())
 print(df4.head())
+print(df5.head())
 
 #df_merge是全数据，df_result1是单品数据，df_result2是分类数据
 df_merge = pd.merge(df1,df2,on='单品编码',how='inner')
@@ -135,4 +140,8 @@ daily_sales_item_30 = daily_sales_item_30.drop(daily_sales_item[(daily_sales_ite
 daily_sales_item_30 = daily_sales_item_30.reset_index(drop=True)
 daily_sales_item_30 = daily_sales_item_30.sort_values(['Cluster', '单品日均销量'],ascending=True)
 daily_sales_item_30.to_excel("单品销量统计_30.xlsx", index=False,)
+df3.columns =["销售日期","单品编码","批发价格(元/千克)"]
+daily_sales_item_1 = pd.merge(df3,df_merge,on=['单品编码','销售日期'],how='inner')
+
+daily_sales_item_1.to_excel("单品日销量_批发价.xlsx", index=False)
 

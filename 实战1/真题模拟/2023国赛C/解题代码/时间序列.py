@@ -62,7 +62,7 @@ daily_sales_1.columns = ['单品名称', '销售日期', '总销量(千克)']
 daily_sales_2 = df_merge.groupby(['分类名称', df_merge['销售日期'].dt.date])['销量(千克)'].sum().reset_index()
 daily_sales_2.columns = ['分类名称', '销售日期', '总销量(千克)']
 daily_sales_2.to_excel("分类销量按日.xlsx", index=False)
-
+# 按天统计每个品类销量
 daily_sales_2_1 = daily_sales_2[daily_sales_2["分类名称"] == "水生根茎类"]
 daily_sales_2_2 = daily_sales_2[daily_sales_2["分类名称"] == "花叶类"]
 daily_sales_2_3 = daily_sales_2[daily_sales_2["分类名称"] == "食用菌"]
@@ -76,7 +76,7 @@ daily_sales_2_3.to_excel("分类销量按日_食用菌.xlsx", index=False)
 daily_sales_2_4.to_excel("分类销量按日_辣椒类.xlsx", index=False)
 daily_sales_2_5.to_excel("分类销量按日_花菜类.xlsx", index=False)
 daily_sales_2_6.to_excel("分类销量按日_茄类.xlsx", index=False)
-
+# 按天合并每个品类销量
 daily_sales_all = daily_sales_2_1.drop(columns = ["分类名称"])
 daily_sales_all = daily_sales_2_1.drop(columns = ["总销量(千克)"])
 
@@ -99,19 +99,3 @@ daily_sales_item['单品日最大销量'] = daily_sales_item['单品日最大销
 
 daily_sales_item.to_excel("单品销量统计.xlsx", index=False)
 
-
-daily_sales_item.to_excel("单品销量统计.xlsx", index=False)
-daily_sales_item_30 = daily_sales_item.drop(daily_sales_item[(daily_sales_item["Cluster"] == 0) & (daily_sales_item["单品日均销量"] < 8.8)].index)
-daily_sales_item_30 = daily_sales_item_30.drop(daily_sales_item[(daily_sales_item["Cluster"] == 1) & (daily_sales_item["单品日均销量"] < 17.3)].index)
-daily_sales_item_30 = daily_sales_item_30.reset_index(drop=True)
-daily_sales_item_30 = daily_sales_item_30.sort_values(['Cluster', '单品日均销量'],ascending=True)
-daily_sales_item_30.to_excel("单品销量统计_30.xlsx", index=False,)
-df3.columns =["销售日期","单品编码","批发价格(元/千克)"]
-daily_sales_item_1 = pd.merge(df3,df_merge,on=['单品编码','销售日期'],how='inner')
-
-daily_sales_item_1.to_excel("单品日销量_批发价.xlsx", index=False)
-
-daily_sales_all = daily_sales_all.drop(columns = ["分类名称"])
-daily_sales_all["date"] = np.arange(1, len(daily_sales_all) + 1)
-print(daily_sales_all.head())
-len(daily_sales_all["date"])

@@ -34,7 +34,7 @@ df2 = pd.read_excel(path_file2)
 df3 = pd.read_excel(path_file3)
 df4 = pd.read_excel(path_file4)
 df5 = pd.read_excel(path_file5)
-df5
+
 
 # 打印数据框的前几行，查看数据
 print(df1.head())

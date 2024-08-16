@@ -20,4 +20,3 @@ df=pd.read_excel(path_file, sheet_name='Sheet1')
 # df = df.fillna(0)
 df = df.drop(df[(df['指数'] < 85) | (df['指数'] > 105)].index)
 # df.to_excel("合并总表.xlsx")
-

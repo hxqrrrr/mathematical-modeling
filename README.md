@@ -10,6 +10,6 @@
 ---
 欢迎交流
 
-我叫黄孝麒
+我叫黄孝麒，是一名数学建模爱好者，欢迎与我交流。
 
 ![snow-2356](https://gitee.com/xingzhixin5/picture/raw/master/202408181419181.gif)

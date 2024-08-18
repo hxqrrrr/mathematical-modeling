@@ -27,7 +27,7 @@ X_scaled = scaler.fit_transform(X)
 # 4. 进行K-means聚类
 print("正在进行K-means聚类...")
 n_clusters = 4  # 您可以根据需要调整这个数字
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+kmeans = KMeans(n_clusters=n_clusters, random_state=42,)
 cluster_labels = kmeans.fit_predict(X_scaled)
 
 # 将聚类结果添加到原始数据框

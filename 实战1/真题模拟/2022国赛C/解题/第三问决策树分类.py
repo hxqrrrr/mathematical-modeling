@@ -26,19 +26,20 @@ def decision_tree_model(df_start):
 
     # 评估模型
     y_pred = clf.predict(X_test)
-    print("Accuracy:", accuracy_score(y_test, y_pred))
+    print("准确率:", accuracy_score(y_test, y_pred))
     print(classification_report(y_test, y_pred))
 
     return clf, features.columns
 
 # 读取数据并进行预处理
 df = pd.read_excel('合并总表.xlsx', sheet_name='Sheet1')
+df3 = pd.read_excel('表3.xlsx')
 df = df.drop(df[(df['指数'] < 85) | (df['指数'] > 105)].index)
 df_weathered = df.drop(df[df['表面风化'] == "无风化"].index)
 df_unweathered = df.drop(df[df['表面风化'] == "风化"].index)
-# 训练模型
 
-model, feature_columns = decision_tree_model(df_unweathered)
+# 训练模型
+model, feature_columns = decision_tree_model(df_weathered)
 
 # 定义一个函数来预测新数据
 def predict_new_sample(model, feature_columns, new_sample):
@@ -49,13 +50,16 @@ def predict_new_sample(model, feature_columns, new_sample):
     prediction = model.predict(new_sample)
     return prediction[0]
 
-# 示例：如何使用这个函数来预测新的样本
-new_sample = pd.DataFrame({
-    '二氧化硅(SiO2)': [78.45], '氧化钠(Na2O)': [0], '氧化钾(K2O)': [0], '氧化钙(CaO)': [6.08],
-    '氧化镁(MgO)': [1.86], '氧化铝(Al2O3)': [7.23], '氧化铁(Fe2O3)': [2.15], '氧化铜(CuO)': [2.11],
-    '氧化铅(PbO)': [0], '氧化钡(BaO)': [0], '五氧化二磷(P2O5)': [1.06], '氧化锶(SrO)': [0.03],
-    '氧化锡(SnO2)': [0.00], '二氧化硫(SO2)': [0.51],
-})
+# 对df3中的每个样本进行预测
+for index, row in df3.iterrows():
+    sample = pd.DataFrame([row])
+    predicted_class = predict_new_sample(model, feature_columns, sample)
+    print(f"样本 {row['文物编号']} 的预测类型是: {predicted_class}")
 
-predicted_class = predict_new_sample(model, feature_columns, new_sample)
-print(f"预测的类型是: {predicted_class}")
+# 可视化决策树
+plt.figure(figsize=(20,10))
+plot_tree(model, feature_names=feature_columns, class_names=model.classes_, filled=True, rounded=True)
+plt.savefig('decision_tree.png')
+plt.close()
+
+print("决策树已保存为 decision_tree.png")

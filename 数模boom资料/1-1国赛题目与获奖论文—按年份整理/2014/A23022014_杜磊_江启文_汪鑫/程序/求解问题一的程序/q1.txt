@@ -1,0 +1,11 @@
+A=double(imread('附件3 距2400m处的数字高程图.tif'));
+[m n]=size(A);
+subplot(1,2,1);
+[X Y]=meshgrid(1:m,1:n);
+mesh(X,Y,A)
+%%
+B=double(imread('附件4 距月面100m处的数字高程图.tif'));
+[m n]=size(B);
+subplot(1,2,2);
+[X Y]=meshgrid(1:m,1:n);
+mesh(X,Y,B)

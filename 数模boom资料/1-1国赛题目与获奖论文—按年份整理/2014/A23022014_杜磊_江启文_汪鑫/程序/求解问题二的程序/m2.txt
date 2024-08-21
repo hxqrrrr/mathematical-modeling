@@ -1,0 +1,76 @@
+function [x,y,z,vx,vy,vz] = rv_moon(a,e,incl,raan,argp,M)
+mu_e =4.902793455e3; % unit in km^3/s^2 
+d2r = pi/180;
+% transform to proper units
+a = a;
+incl = incl*d2r;
+raan = raan*d2r;
+argp = argp*d2r;
+M = M*d2r;
+  E0 = M;
+  for i=1:100
+   M0 = E0 - e*sin(E0);
+   %  check for convergence
+   error = M - M0;
+   if abs(error) < 1e-15 
+       E=E0;
+       break 
+   end
+   %  Newton iteration step
+   E = E0 + error/(1 - e*cos(E0));
+   E0 = E;
+  end
+  
+%%
+temp = tan(E/2)/sqrt((1-e)/(1+e));
+theta = atan(temp)*2;
+
+% orbital radius and velocity
+r = a*(1-e^2)/(1+e*cos(theta));
+v = sqrt(2*mu_e/r - mu_e/a);
+
+% flight-path angle
+gamma = atan(e*sin(theta)/(1+e*cos(theta)));
+
+% compute position and velocity vector
+w = theta + argp;
+x = r* (cos(w)*cos(raan) - sin(w)*cos(incl)*sin(raan));
+y = r* (cos(w)*sin(raan) + sin(w)*cos(incl)*cos(raan));
+z = r* (sin(w)*sin(incl));
+vx = v*( -sin(w - gamma)*cos(raan) - cos(w - gamma)*cos(incl)*sin(raan));
+vy = v*( -sin(w - gamma)*sin(raan) + cos(w - gamma)*cos(incl)*cos(raan));
+vz = v*(cos(w-gamma)*sin(incl));
+
+fid = fopen(fname, 'r');
+A = fscanf(fid,'%13c%*s',1);
+B = fscanf(fid,'%d%6d%*c%5d%*3c%2d%f%f%5d%*c%*d%5d%*c%*d%d%5d',[1,10]);
+C = fscanf(fid,'%d%6d%f%f%f%f%f%f',[1,8]);
+fclose(fid);
+satname=A;
+% The value of mu is for the earth
+mu = 3.986004415e5;
+%  Calculate 2-digit year (Oh no!, look out for Y2K bug!)
+yr = B(1,4);
+% Calculate epoch in julian days
+epoch = B(1,5);
+%ndot = B(1,6);
+% n2dot = B(1,7);
+% Assign variables to the orbital elements
+i = C(1,3)*pi/180;          % inclination
+Om = C(1,4)*pi/180;         % Right Ascension of the Ascending Node
+e = C(1,5)/1e7;             % Eccentricity
+om = C(1,6)*pi/180;         % Argument of periapsis
+M = C(1,7)*pi/180;          % Mean anomaly
+n = C(1,8)*2*pi/(24*3600);  % Mean motion
+% Calculate the semi-major axis
+a = (mu/n^2)^(1/3);
+% Calculate the eccentric anomaly using mean anomaly
+E = EofMe(M,e,1e-10);
+% Calculate true anomaly from eccentric anomaly
+cosnu = (e-cos(E)) / (e*cos(E)-1);
+sinnu = ((a*sqrt(1-e*e)) / (a*(1-e*cos(E))))*sin(E);
+nu = atan2(sinnu,cosnu);
+if (nu<0), nu=nu+2*pi; end
+% Return the orbital elements in a 1x6 matrix
+oe = [a e i Om om nu];
+

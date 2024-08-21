@@ -1,0 +1,11 @@
+边缘检测程序
+I=imread('附件3 距2400m处的数字高程图.tif'); 
+BW22= edge(I,'Canny',0.4) ;   %edge调用Canny为检测算子判别阈值为0.4
+%figure,
+imshow(BW22);
+title( '阈值为0.4的Canny算子边缘检测图像 (2400m处)');
+%%
+I=imread('附件4 距月面100m处的数字高程图.tif'); 
+BW22= edge(I,'Canny',0.4) ;   %edge调用Canny为检测算子判别阈值为0.4
+figure,imshow(BW22);
+title( '阈值为0.4的Canny算子边缘检测图像 （100m处）');

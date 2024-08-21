@@ -1,0 +1,29 @@
+clear
+clc
+w0=pi/4; k1=0.1;k2=35;v=50;
+syms t x y k g v0 sinwcosw£»
+X=dsolve('D2x=-Dx';'x(0)=0£¬
+Dx(0)=v0*cosw';'t');
+X=simplify(X)
+X=subs(X,cosw,cos(w0));
+X=subs(X,v0,v);
+T=finverse(X);
+T=subs(T't'x);
+Y=dsolve('D2y=-Dy-g'''y(0)=0£¬Dy(0)=v0*sinw'''t');
+Y=subs(Y,t,T);
+Y=simplify(Y);
+Y=subs(Y;g;9.8);
+Y=subs(Y;v0;v);
+Y=subs(Y;sinw;sin(w0));
+Y=subs(Y;cosw;cos(w0));
+
+%%
+V0=5;theta=pi/3;
+A=v0*cos(theta);
+b=v0*sin(theta);
+g=9.8/6;
+t=0:0.01:3;
+x =a-a*exp(-t);
+y =-exp(-t)*(g+b)-g*t+g+b;
+plot(x,y);
+grid
